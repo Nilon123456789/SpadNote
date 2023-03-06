@@ -16,3 +16,4 @@ xcuserdata/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 Build/*
+.DS_Store
