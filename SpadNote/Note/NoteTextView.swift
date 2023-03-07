@@ -199,6 +199,9 @@ class NoteTextView: NSTextView {
                 // Remove backround
                 self.backgroundColor = defaultBackroundColor
                 
+                // Trigger text change notification
+                self.didChangeText()
+                
             }
             // Handle the confirmation here
         } else {
@@ -231,7 +234,7 @@ class NoteTextView: NSTextView {
     
     override func keyDown(with event: NSEvent) {
         
-        // Call the past methode if cmd + shift + V is pressed 
+        // Call the past methode if cmd + shift + V is pressed
         if event.modifierFlags.contains(.shift) && event.modifierFlags.contains(.command) {
             let char = event.charactersIgnoringModifiers
             if char == "V" {

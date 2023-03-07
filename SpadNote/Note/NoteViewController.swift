@@ -11,6 +11,10 @@ class NoteViewController: NSViewController {
     
     @IBOutlet weak var textView: NSTextView!
     
+    
+    @IBOutlet weak var charNum : NSTextField!
+    @IBOutlet weak var wordNum : NSTextField!
+    
     let fileManager = FileManager.default
     
     let fileName = Constant.fileName
@@ -39,6 +43,8 @@ class NoteViewController: NSViewController {
         
         // Set the scale down for images
         textView.layoutManager?.defaultAttachmentScaling = NSImageScaling.scaleProportionallyDown
+        
+        updateStats()
     }
     
     @objc func textDidChange(_ notification: Notification) {
@@ -79,6 +85,18 @@ class NoteViewController: NSViewController {
 //                print("Faild to write \(error)")
             }
         }
+        
+        // Update char numbers and word numbers
+        updateStats()
+    }
+    
+    func updateStats() {
+        
+        let char = textView.string.count
+        let words = textView.string.split { !$0.isLetter }
+        
+        wordNum.stringValue = "Words : " + String(words.count)
+        charNum.stringValue = "Characters : " + String(char)
     }
     
     override func viewDidAppear() {
