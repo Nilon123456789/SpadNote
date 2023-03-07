@@ -698,8 +698,7 @@
                                 <action selector="allNotes:" target="Voe-Tx-rLC" id="JbN-Vv-7os"/>
                             </connections>
                         </menuItem>
-                        <menuItem title="Preferences" id="EIF-Ck-Qhm">
-                            <modifierMask key="keyEquivalentModifierMask"/>
+                        <menuItem title="Preferences" keyEquivalent="," id="EIF-Ck-Qhm">
                             <connections>
                                 <action selector="preference:" target="Ady-hI-5gd" id="W25-4I-a7p"/>
                             </connections>

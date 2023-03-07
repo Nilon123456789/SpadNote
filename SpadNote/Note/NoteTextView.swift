@@ -147,41 +147,63 @@ class NoteTextView: NSTextView {
         
         let fileURL = savePath.appendingPathComponent(fileName)
         
-        if fileManager.fileExists(atPath: fileURL.path) {
-            Util.deleteFiles(fileURL)
-        }
-        
-        // Empty the text view
-        if self.textStorage != nil {
-            self.textStorage?.setAttributedString(NSAttributedString())
-            self.textColor = defaultTextColor
-            
-            //Remove italic, bold, underline
-            var currentFont: NSFont
-            if let typingAttributesFont = self.typingAttributes[.font] as? NSFont {
-                currentFont = typingAttributesFont
-            } else {
-                currentFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let alert = NSAlert()
+        alert.messageText = "Are you sure you want to delete the whole note?"
+        alert.addButton(withTitle: "No")
+        alert.addButton(withTitle: "Yes Delete")
+        let response = alert.runModal()
+        if response == NSApplication.ModalResponse.alertSecondButtonReturn {
+            // User clicked "Yes" button
+
+            // Backup the old file
+            do {
+                Util.deleteFiles(savePath.appendingPathComponent(fileName + ".cleared.old"))
+                try fileManager.copyItem(at: fileURL, to:
+                                            savePath.appendingPathComponent(fileName + ".cleared.old"))
+            } catch {
+                // print("Error copying file: \(error)")
             }
-            let fontDescriptor = currentFont.fontDescriptor
-            let symbolicTraits = fontDescriptor.symbolicTraits
-            let newFont: NSFont
             
-            var newFontDescriptor = NSFontDescriptor()
-            if (symbolicTraits.contains(.italic)) {
-                newFontDescriptor = fontDescriptor.withSymbolicTraits(symbolicTraits.subtracting(.italic))
+            if fileManager.fileExists(atPath: fileURL.path) {
+                Util.deleteFiles(fileURL)
             }
-            if (symbolicTraits.contains(.bold)) {
-                newFontDescriptor = fontDescriptor.withSymbolicTraits(symbolicTraits.subtracting(.bold))
+            
+            // Empty the text view
+            if self.textStorage != nil {
+                self.textStorage?.setAttributedString(NSAttributedString())
+                self.textColor = defaultTextColor
+                
+                //Remove italic, bold, underline
+                var currentFont: NSFont
+                if let typingAttributesFont = self.typingAttributes[.font] as? NSFont {
+                    currentFont = typingAttributesFont
+                } else {
+                    currentFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+                }
+                let fontDescriptor = currentFont.fontDescriptor
+                let symbolicTraits = fontDescriptor.symbolicTraits
+                let newFont: NSFont
+                
+                var newFontDescriptor = NSFontDescriptor()
+                if (symbolicTraits.contains(.italic)) {
+                    newFontDescriptor = fontDescriptor.withSymbolicTraits(symbolicTraits.subtracting(.italic))
+                }
+                if (symbolicTraits.contains(.bold)) {
+                    newFontDescriptor = fontDescriptor.withSymbolicTraits(symbolicTraits.subtracting(.bold))
+                }
+                newFont = NSFont(descriptor: newFontDescriptor, size: currentFont.pointSize)!
+                var newTypingAttributes = self.typingAttributes
+                newTypingAttributes[.font] = newFont
+                self.typingAttributes = newTypingAttributes
+                
+                // Remove backround
+                self.backgroundColor = defaultBackroundColor
+                
             }
-            newFont = NSFont(descriptor: newFontDescriptor, size: currentFont.pointSize)!
-            var newTypingAttributes = self.typingAttributes
-            newTypingAttributes[.font] = newFont
-            self.typingAttributes = newTypingAttributes
-            
-            // Remove backround
-            self.backgroundColor = defaultBackroundColor
-            
+            // Handle the confirmation here
+        } else {
+            // User clicked "No" button or closed the dialog
+            // Do nothing
         }
     }
     @IBAction func TextColor(_ sender: NSColorWell) {
@@ -207,6 +229,20 @@ class NoteTextView: NSTextView {
         // Drawing code here.
     }
     
+    override func keyDown(with event: NSEvent) {
+        
+        // Call the past methode if cmd + shift + V is pressed 
+        if event.modifierFlags.contains(.shift) && event.modifierFlags.contains(.command) {
+            let char = event.charactersIgnoringModifiers
+            if char == "V" {
+                self.paste(self)
+                return
+            }
+        }
+        
+        super.keyDown(with: event)
+    }
+    
     override func paste(_ sender: Any?) {
         var previousColor = NSColor() // Previous font color
         
@@ -228,7 +264,15 @@ class NoteTextView: NSTextView {
         // Paste the contents of the clipboard
         let pasteBoard = NSPasteboard.general
         if let pastedString = pasteBoard.string(forType: .string), !pastedString.isEmpty {
-            if Settings.richTextPast {
+            
+            var pastType = Settings.richTextPast
+            
+            // Toggles past mode if shift is pressed
+            if NSEvent.modifierFlags.contains(.shift) {
+                pastType = !pastType
+            }
+            
+            if pastType {
                 
                 super.paste(sender)
                 
